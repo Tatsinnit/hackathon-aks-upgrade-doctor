@@ -40,14 +40,16 @@ func main() {
 		fmt.Println(fmt.Errorf("Unable to list namespaces in the cluster: %w", err))
 	}
 	for _, namespace := range namespacesList.Items {
-		podDistInterface, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace.Name).Get(context.Background(), namespace.Name, metav1.GetOptions{})
+
+		podDistInterface, err := clientset.PolicyV1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
 		if err != nil {
 			fmt.Println(fmt.Errorf("PDB error cluster: %w", err))
 		}
-
-		fmt.Println(podDistInterface.Spec.MinAvailable)
-		fmt.Println(podDistInterface.Spec.MaxUnavailable)
-		fmt.Println(podDistInterface.Status.DisruptionsAllowed)
+		for _, i := range podDistInterface.Items {
+			fmt.Println("Pod Disruption Budget Name : ", i.Name)
+			fmt.Println("Min Available : ", i.Spec.MinAvailable)
+			fmt.Println("Max Available : ", i.Spec.MaxUnavailable)
+			fmt.Println("DisruptionsAllowed : ", i.Status.DisruptionsAllowed)
+		}
 	}
-
 }
