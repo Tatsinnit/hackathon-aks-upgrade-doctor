@@ -40,8 +40,7 @@ func main() {
 		fmt.Println(fmt.Errorf("Unable to list namespaces in the cluster: %w", err))
 	}
 	for _, namespace := range namespacesList.Items {
-		fmt.Println(namespace)
-		podDistInterface, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace.Namespace).Get(context.Background(), namespace.Name, metav1.GetOptions{})
+		podDistInterface, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace.Name).Get(context.Background(), namespace.Name, metav1.GetOptions{})
 		if err != nil {
 			fmt.Println(fmt.Errorf("PDB error cluster: %w", err))
 		}
