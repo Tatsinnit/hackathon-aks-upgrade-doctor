@@ -42,7 +42,7 @@ func main() {
 	}
 	for _, namespace := range namespacesList.Items {
 
-		podDistInterface, err := clientset.PolicyV1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
+		podDistInterface, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
 		if err != nil {
 			fmt.Println(fmt.Errorf("PDB error cluster: %w", err))
 		}
@@ -53,7 +53,7 @@ func main() {
 			fmt.Println("DisruptionsAllowed : ", i.Status.DisruptionsAllowed)
 
 			// The non-zero value for ALLOWED DISRUPTIONS means that the disruption controller has seen the pods, counted the matching pods, and updated the status of the PDB.
-			if i.Status.DisruptionsAllowed == 0 && i.Spec.MaxUnavailable.String() == "0" {
+			if i.Status.DisruptionsAllowed == 0 && fmt.Sprint(i.Spec.MaxUnavailable) == "0" {
 				fmt.Println("Upgrade operation will fail - you are requiring zero voluntary evictions, so cannot successfully drain a Node running one of the Pods")
 			}
 
@@ -69,7 +69,7 @@ func main() {
 			// 		}
 			// Note: Above pseudo code implemenation below
 
-			if i.Status.DisruptionsAllowed == 0 && i.Spec.MinAvailable.String() > "0" {
+			if i.Status.DisruptionsAllowed == 0 && fmt.Sprint(i.Spec.MinAvailable) > "0" {
 				podlist, err := GetPods(clientset, namespace.Name)
 				if err != nil {
 					fmt.Println(err.Error())
