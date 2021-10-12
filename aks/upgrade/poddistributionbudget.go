@@ -3,46 +3,29 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"path"
 	"reflect"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+
+	"aks/upgrade/poddistributionbudget/pkg/kube"
 )
 
 func main() {
-
-	dirname, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println("Cannot get user home dir: %v", err)
-	}
-
-	master := ""
-	kubeconfig := path.Join(dirname, ".kube/config")
-	config, err := clientcmd.BuildConfigFromFlags(master, kubeconfig)
-
-	// config, err := restclient.InClusterConfig()
-	if err != nil {
-		log.Fatalf("Cannot load kubeconfig: %v", err)
-	}
-
 	// Creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
+	kubeClient, err := kube.NewKubeClient("")
 	if err != nil {
-		fmt.Println(fmt.Errorf("getting access to K8S failed: %w", err))
+		panic(fmt.Sprintf("construct kube client failed: %s", err))
 	}
 
-	namespacesList, err := clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	namespacesList, err := kubeClient.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Println(fmt.Errorf("unable to list namespaces in the cluster: %w", err))
 	}
 	for _, namespace := range namespacesList.Items {
 
-		podDistInterface, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
+		podDistInterface, err := kubeClient.PolicyV1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
 		if err != nil {
 			fmt.Println(fmt.Errorf("PDB error cluster: %w", err))
 		}
@@ -70,7 +53,7 @@ func main() {
 			// Note: Above pseudo code implemenation below
 
 			if i.Status.DisruptionsAllowed == 0 && fmt.Sprint(i.Spec.MinAvailable) > "0" {
-				podlist, err := GetPods(clientset, namespace.Name)
+				podlist, err := GetPods(kubeClient, namespace.Name)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
@@ -92,7 +75,7 @@ func main() {
 	}
 }
 
-func GetPods(clientset *kubernetes.Clientset, namespace string) (*v1.PodList, error) {
+func GetPods(clientset kubernetes.Interface, namespace string) (*corev1.PodList, error) {
 	// Create a pod interface for the given namespace
 	podInterface := clientset.CoreV1().Pods(namespace)
 
