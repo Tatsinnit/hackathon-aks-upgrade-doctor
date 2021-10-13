@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -16,6 +17,8 @@ const (
 	Advisory ResultCategory = "advisory"
 	// Warning - The health check returned a warning result.
 	Warning ResultCategory = "warning"
+	// Failed - The health check failed.
+	Failed ResultCategory = "failed"
 )
 
 // CheckResult defines the health check result of an AKS cluster.
@@ -89,5 +92,6 @@ func demo() {
 	}
 
 	// dump the check results
-	generateReportFromCheckResults(checkResults)
+	// generateReportFromCheckResults(checkResults)
+	fmt.Println(checkResults)
 }
