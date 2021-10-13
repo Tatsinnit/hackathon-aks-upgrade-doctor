@@ -29,7 +29,7 @@ func createDemoCommand() *cobra.Command {
 				return fmt.Errorf("unable to list namespaces in the cluster: %w", err)
 			}
 			for _, namespace := range namespacesList.Items {
-				podDistInterface, err := kubeClient.PolicyV1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
+				podDistInterface, err := kubeClient.PolicyV1beta1().PodDisruptionBudgets(namespace.Name).List(context.Background(), metav1.ListOptions{}) //.Get(context.Background(), namespace.Name, metav1.GetOptions{})
 				if err != nil {
 					return fmt.Errorf("PDB error cluster: %w", err)
 				}
@@ -62,13 +62,24 @@ func createDemoCommand() *cobra.Command {
 							return err
 						}
 						count := 0
+						//fmt.Println(podlist)
 						for _, pod := range podlist.Items {
-							if reflect.DeepEqual(pod.Labels, i.Labels) {
+							//fmt.Println(pod.Labels)
+							//fmt.Println(i.Labels)
+							//fmt.Println(i)
+							//fmt.Println(IsMapSubset(pod.Labels, i.Spec.Selector.MatchLabels))
+
+							if IsMapSubset(pod.Labels, i.Spec.Selector.MatchLabels) {
+								//fmt.Println(count)
 								count = count + 1
 							}
 						}
+
 						if count != 0 {
+							//fmt.Println(count)
 							diff := count - i.Spec.MinAvailable.IntValue()
+
+							//fmt.Println(diff)
 							if diff == 0 {
 								fmt.Println("Upgrade operation will fail - cannot successfully drain a Node running one of the Pods")
 							}
@@ -98,3 +109,29 @@ func GetPods(clientset kubernetes.Interface, namespace string) (*corev1.PodList,
 
 	return podList, nil
 }
+
+
+// IsMapSubset returns true if mapSubset is a subset of mapSet otherwise false
+func IsMapSubset(mapSet interface{}, mapSubset interface{}) bool {
+	mapSetValue := reflect.ValueOf(mapSet)
+	mapSubsetValue := reflect.ValueOf(mapSubset)
+	if fmt.Sprintf("%T", mapSet) != fmt.Sprintf("%T", mapSubset) {
+		return false
+	}
+	if len(mapSetValue.MapKeys()) < len(mapSubsetValue.MapKeys()) {
+		return false
+	}
+	if len(mapSubsetValue.MapKeys()) == 0 {
+		return true
+	}
+	iterMapSubset := mapSubsetValue.MapRange()
+	for iterMapSubset.Next() {
+		k := iterMapSubset.Key()
+		v := iterMapSubset.Value()
+		value := mapSetValue.MapIndex(k)
+		if !value.IsValid() || v.Interface() != value.Interface() {
+			return false
+		}
+	}
+	return true
+} 
