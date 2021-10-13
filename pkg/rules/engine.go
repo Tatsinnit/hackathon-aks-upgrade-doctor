@@ -42,15 +42,15 @@ func (e *engineImpl) CheckRulesSet(
 
 	var checkResults []*CheckResult
 	for _, rule := range rs {
-		result, err := rule.GetCheckResult(ctx, clusterCtx)
+		results, err := rule.GetCheckResults(ctx, clusterCtx)
 		if err != nil {
-			result = &CheckResult{
+			results = []*CheckResult{{
 				RuleID:      rule.RuleID(),
 				Category:    Failed,
 				Description: fmt.Sprintf("check result failed: %s", err.Error()),
-			}
+			}}
 		}
-		checkResults = append(checkResults, result)
+		checkResults = append(checkResults, results...)
 
 		bar.Incr()
 	}

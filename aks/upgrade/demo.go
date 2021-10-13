@@ -19,17 +19,17 @@ func (d demoRule) RuleID() string {
 	return d.ruleID
 }
 
-func (d demoRule) GetCheckResult(
+func (d demoRule) GetCheckResults(
 	ctx context.Context,
 	clusterCtx rules.ClusterContext,
-) (*rules.CheckResult, error) {
+) ([]*rules.CheckResult, error) {
 	time.Sleep(500 * time.Millisecond)
 
-	return &rules.CheckResult{
+	return []*rules.CheckResult{{
 		RuleID:      d.ruleID,
 		Category:    d.category,
 		Description: d.description,
-	}, nil
+	}}, nil
 }
 
 func createEngineDemoCommand() *cobra.Command {
@@ -55,23 +55,19 @@ func createEngineDemoCommand() *cobra.Command {
 				context.Background(),
 				clusterCtx,
 				rules.RulesSet{
+					upgradePDBRuleProvider,
 					demoRule{
-						ruleID:      "upgrade/pdb",
-						category:    rules.Warning,
-						description: "there are some PDB that will potienally block the cluster upgrade",
-					},
-					demoRule{
-						ruleID:      "upgrade/subnet",
+						ruleID:      "demo/upgrade/subnet",
 						category:    rules.Warning,
 						description: "cluster subnet is almost full",
 					},
 					demoRule{
-						ruleID:      "version/out-of-date-version",
+						ruleID:      "demo/version/out-of-date-version",
 						category:    rules.Advisory,
 						description: "cluster version 1.17.11 is out-of-date",
 					},
 					demoRule{
-						ruleID:      "control-plane/coredns",
+						ruleID:      "demo/control-plane/coredns",
 						category:    rules.Healthy,
 						description: "CoreDNS pods are running normally",
 					},

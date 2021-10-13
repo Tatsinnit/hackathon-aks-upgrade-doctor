@@ -49,8 +49,8 @@ type RuleProvider interface {
 	// Rule id should be globally unique.
 	RuleID() string
 
-	// GetCheckResult executes the health check rule and returns the health check result.
-	GetCheckResult(ctx context.Context, clusterCtx ClusterContext) (*CheckResult, error)
+	// GetCheckResults executes the health check rule and returns the health check results.
+	GetCheckResults(ctx context.Context, clusterCtx ClusterContext) ([]*CheckResult, error)
 }
 
 // RulesSet defines a set of rules.
