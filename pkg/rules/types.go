@@ -17,7 +17,7 @@ const (
 	Advisory ResultCategory = "advisory"
 	// Warning - The health check returned a warning result.
 	Warning ResultCategory = "warning"
-	// Failed - The health check failed.
+	// Failed - The health check failed. This indicates checker error, (usually) not the issue in cluster.
 	Failed ResultCategory = "failed"
 )
 

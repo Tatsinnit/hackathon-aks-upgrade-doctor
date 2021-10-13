@@ -2,18 +2,21 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/pkg/report"
 	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/pkg/rules"
 	"github.com/spf13/cobra"
 )
 
 type demoRule struct {
+	ruleID      string
+	category    rules.ResultCategory
+	description string
 }
 
 func (d demoRule) RuleID() string {
-	return "demo"
+	return d.ruleID
 }
 
 func (d demoRule) GetCheckResult(
@@ -23,9 +26,9 @@ func (d demoRule) GetCheckResult(
 	time.Sleep(500 * time.Millisecond)
 
 	return &rules.CheckResult{
-		RuleID:      d.RuleID(),
-		Category:    rules.Healthy,
-		Description: "hello, world",
+		RuleID:      d.ruleID,
+		Category:    d.category,
+		Description: d.description,
 	}, nil
 }
 
@@ -52,17 +55,39 @@ func createEngineDemoCommand() *cobra.Command {
 				context.Background(),
 				clusterCtx,
 				rules.RulesSet{
-					demoRule{},
-					demoRule{},
-					demoRule{},
-					demoRule{},
+					demoRule{
+						ruleID:      "upgrade/pdb",
+						category:    rules.Warning,
+						description: "there are some PDB that will potienally block the cluster upgrade",
+					},
+					demoRule{
+						ruleID:      "upgrade/subnet",
+						category:    rules.Warning,
+						description: "cluster subnet is almost full",
+					},
+					demoRule{
+						ruleID:      "version/out-of-date-version",
+						category:    rules.Advisory,
+						description: "cluster version 1.17.11 is out-of-date",
+					},
+					demoRule{
+						ruleID:      "control-plane/coredns",
+						category:    rules.Healthy,
+						description: "CoreDNS pods are running normally",
+					},
 				},
 			)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(results)
+			p := report.FancyCheckResultPresenter{
+				ReportName:   "demo cluster result",
+				CheckResults: results,
+			}
+			if err := p.Present(cmd.OutOrStdout()); err != nil {
+				return err
+			}
 
 			return nil
 		},
