@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 
+	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/aks/upgrade/utils"
 	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/pkg/kube"
 )
 
@@ -35,51 +33,31 @@ func createDemoCommand() *cobra.Command {
 				}
 				for _, i := range podDistInterface.Items {
 					fmt.Println("Pod Disruption Budget Name : ", i.Name)
-					fmt.Println("Min Available : ", i.Spec.MinAvailable)
-					fmt.Println("Max Available : ", i.Spec.MaxUnavailable)
-					fmt.Println("DisruptionsAllowed : ", i.Status.DisruptionsAllowed)
+					fmt.Println("Min Available : ", fmt.Sprint(i.Spec.MinAvailable))
+					fmt.Println("Max Available : ", fmt.Sprint(i.Spec.MaxUnavailable))
+					fmt.Println("DisruptionsAllowed : ", fmt.Sprint(i.Status.DisruptionsAllowed))
 
 					// The non-zero value for ALLOWED DISRUPTIONS means that the disruption controller has seen the pods, counted the matching pods, and updated the status of the PDB.
-					if i.Status.DisruptionsAllowed == 0 && fmt.Sprint(i.Spec.MaxUnavailable) == "0" {
+					if fmt.Sprint(i.Status.DisruptionsAllowed) == "0" && fmt.Sprint(i.Spec.MaxUnavailable) == "0" {
 						fmt.Println("Upgrade operation will fail - you are requiring zero voluntary evictions, so cannot successfully drain a Node running one of the Pods")
 					}
 
-					// Below code tries to implement following pseudo code
-					// 	Count = Count of (kubectl get pods --selector=<Labels provided in PDB>)
-					// 	if (Count != 0)
-					// 		{
-					// 			If (Count - "MIN AVAILABLE" == 0)
-					// 			{
-					// 				Printf("Upgrade operation will fail - cannot successfully drain a Node running one of the Pods")
-					//
-					// 			}
-					// 		}
-					// Note: Above pseudo code implemenation below
-
-					if i.Status.DisruptionsAllowed == 0 && fmt.Sprint(i.Spec.MinAvailable) > "0" {
-						podlist, err := GetPods(kubeClient, namespace.Name)
+					if i.Spec.MinAvailable != nil && fmt.Sprint(i.Status.DisruptionsAllowed) == "0" && fmt.Sprint(i.Spec.MinAvailable) > "0" {
+						podlist, err := utils.GetPods(kubeClient, namespace.Name)
 						if err != nil {
 							return err
 						}
 						count := 0
-						//fmt.Println(podlist)
 						for _, pod := range podlist.Items {
-							//fmt.Println(pod.Labels)
-							//fmt.Println(i.Labels)
-							//fmt.Println(i)
-							//fmt.Println(IsMapSubset(pod.Labels, i.Spec.Selector.MatchLabels))
 
-							if IsMapSubset(pod.Labels, i.Spec.Selector.MatchLabels) {
-								//fmt.Println(count)
+							if utils.IsMapSubset(pod.Labels, i.Spec.Selector.MatchLabels) {
 								count = count + 1
 							}
 						}
 
 						if count != 0 {
-							//fmt.Println(count)
 							diff := count - i.Spec.MinAvailable.IntValue()
 
-							//fmt.Println(diff)
 							if diff == 0 {
 								fmt.Println("Upgrade operation will fail - cannot successfully drain a Node running one of the Pods")
 							}
@@ -95,43 +73,3 @@ func createDemoCommand() *cobra.Command {
 
 	return cmd
 }
-
-func GetPods(clientset kubernetes.Interface, namespace string) (*corev1.PodList, error) {
-	// Create a pod interface for the given namespace
-	podInterface := clientset.CoreV1().Pods(namespace)
-
-	// List the pods in the given namespace
-	podList, err := podInterface.List(context.TODO(), metav1.ListOptions{})
-
-	if err != nil {
-		return nil, fmt.Errorf("getting pods failed: %w", err)
-	}
-
-	return podList, nil
-}
-
-
-// IsMapSubset returns true if mapSubset is a subset of mapSet otherwise false
-func IsMapSubset(mapSet interface{}, mapSubset interface{}) bool {
-	mapSetValue := reflect.ValueOf(mapSet)
-	mapSubsetValue := reflect.ValueOf(mapSubset)
-	if fmt.Sprintf("%T", mapSet) != fmt.Sprintf("%T", mapSubset) {
-		return false
-	}
-	if len(mapSetValue.MapKeys()) < len(mapSubsetValue.MapKeys()) {
-		return false
-	}
-	if len(mapSubsetValue.MapKeys()) == 0 {
-		return true
-	}
-	iterMapSubset := mapSubsetValue.MapRange()
-	for iterMapSubset.Next() {
-		k := iterMapSubset.Key()
-		v := iterMapSubset.Value()
-		value := mapSetValue.MapIndex(k)
-		if !value.IsValid() || v.Interface() != value.Interface() {
-			return false
-		}
-	}
-	return true
-} 
