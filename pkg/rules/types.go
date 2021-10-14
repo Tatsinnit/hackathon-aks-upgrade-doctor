@@ -2,8 +2,9 @@ package rules
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/Azure/go-autorest/autorest"
+	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/pkg/azure"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -36,11 +37,11 @@ type ClusterContext interface {
 	// GetClusterKubeClient returns a kubernetes client instance.
 	GetClusterKubeClient() (kubernetes.Interface, error)
 
-	// GetAKSClusterResourceDetails returns the AKS cluster resource details.
-	// GetAKSClusterResourceDetails()
+	// GetAzureAuthorizer returns the Azure SDK authorizer.
+	GetAzureAuthorizer() (autorest.Authorizer, error)
 
-	// GetAKSClusterNetworkSetup returns the AKS cluster network setup. TBD
-	// GetAKSClusterNetworkSetup()
+	// GetAKSClusterResourceDetails returns the AKS cluster resource details.
+	GetManagedClusterInformation(ctx context.Context) (azure.ManagedClusterInformation, error)
 }
 
 // RuleProvider provides and checks a health check rule for an AKS cluster.
@@ -60,38 +61,4 @@ type RulesSet []RuleProvider
 type Engine interface {
 	// CheckRulesSet checks a set of rules for an AKS cluster.
 	CheckRulesSet(ctx context.Context, clusterCtx ClusterContext, rs RulesSet) ([]*CheckResult, error)
-}
-
-func demo() {
-	// placeholder for variables...
-	var (
-		ctx        context.Context
-		clusterCtx ClusterContext
-		engine     Engine
-
-		pdbRule        RuleProvider
-		subnetFullRule RuleProvider
-	)
-
-	// a set of rules that we want to check for upgrade scenario
-	upgradeRules := RulesSet{
-		// check pdb...
-		pdbRule,
-		// check subnet
-		subnetFullRule,
-	}
-
-	// execute these rules!
-	checkResults, err := engine.CheckRulesSet(
-		ctx,
-		clusterCtx,
-		upgradeRules,
-	)
-	if err != nil {
-		// handle error
-	}
-
-	// dump the check results
-	// generateReportFromCheckResults(checkResults)
-	fmt.Println(checkResults)
 }
