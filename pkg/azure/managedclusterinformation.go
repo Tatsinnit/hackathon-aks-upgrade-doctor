@@ -64,7 +64,7 @@ type ManagedClusterAgentPoolInformation interface {
 	GetResourceName() string
 
 	// GetLatestModel returns the latest properties of the managed cluster agent pool.
-	GetLatestModel(ctx context.Context) (containerservice.ManagedClusterAgentPoolProfile, error)
+	GetLatestModel(ctx context.Context) (containerservice.AgentPool, error)
 
 	// TODO: GetVMSSName()
 }

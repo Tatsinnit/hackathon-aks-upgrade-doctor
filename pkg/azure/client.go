@@ -18,6 +18,16 @@ func aksManagedClusterClient(
 	return client
 }
 
+func aksAgentPoolClient(
+	authorizer autorest.Authorizer,
+	subscriptionID string,
+) containerservice.AgentPoolsClient {
+	client := containerservice.NewAgentPoolsClient(subscriptionID)
+	client.Authorizer = authorizer
+
+	return client
+}
+
 type ARMResourceID struct {
 	Subscription  string
 	ResourceGroup string

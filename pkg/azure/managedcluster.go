@@ -88,8 +88,8 @@ func (m *nilManagedClusterAgentPoolInformation) GetResourceName() string {
 
 func (m *nilManagedClusterAgentPoolInformation) GetLatestModel(
 	ctx context.Context,
-) (containerservice.ManagedClusterAgentPoolProfile, error) {
-	return containerservice.ManagedClusterAgentPoolProfile{}, ErrNotAvilable
+) (containerservice.AgentPool, error) {
+	return containerservice.AgentPool{}, ErrNotAvilable
 }
 
 type managedClusterInfomration struct {
@@ -163,5 +163,71 @@ func (m *managedClusterInfomration) GetKubeConfig(ctx context.Context) (string, 
 func (m *managedClusterInfomration) GetAgentPoolInformation(
 	ctx context.Context, agentPoolName string,
 ) (ManagedClusterAgentPoolInformation, error) {
-	return nil, ErrNotAvilable
+	apInformation := &managedClusterAgentPoolInformation{
+		azureAuthorizer:   m.azureAuthorizer,
+		clusterResourceID: m.resourceID,
+		agentPoolName:     agentPoolName,
+		mutex:             &sync.RWMutex{},
+	}
+	if _, err := apInformation.GetLatestModel(ctx); err != nil {
+		return &nilManagedClusterAgentPoolInformation{}, err
+	}
+
+	return apInformation, nil
+}
+
+type managedClusterAgentPoolInformation struct {
+	azureAuthorizer autorest.Authorizer
+
+	clusterResourceID *ARMResourceID
+	agentPoolName     string
+
+	mutex *sync.RWMutex // protects the following fields
+	model *containerservice.AgentPool
+}
+
+var _ ManagedClusterAgentPoolInformation = &managedClusterAgentPoolInformation{}
+
+func (m *managedClusterAgentPoolInformation) IsAvailable() bool {
+	return true
+}
+
+func (m *managedClusterAgentPoolInformation) GetResourceID() string {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
+	return to.String(m.model.ID)
+}
+
+func (m *managedClusterAgentPoolInformation) GetSubscriptionID() string {
+	return m.clusterResourceID.Subscription
+}
+
+func (m *managedClusterAgentPoolInformation) GetResourceGroup() string {
+	return m.clusterResourceID.ResourceGroup
+}
+
+func (m *managedClusterAgentPoolInformation) GetManagedClusterName() string {
+	return m.clusterResourceID.ResourceName
+}
+
+func (m *managedClusterAgentPoolInformation) GetResourceName() string {
+	return m.agentPoolName
+}
+
+func (m *managedClusterAgentPoolInformation) GetLatestModel(
+	ctx context.Context,
+) (containerservice.AgentPool, error) {
+	client := aksAgentPoolClient(m.azureAuthorizer, m.clusterResourceID.Subscription)
+	ap, err := client.Get(ctx, m.clusterResourceID.ResourceGroup, m.clusterResourceID.ResourceName, m.agentPoolName)
+	if err != nil {
+		return containerservice.AgentPool{}, err
+	}
+
+	// update record
+	m.mutex.Lock()
+	m.model = &ap
+	m.mutex.Unlock()
+
+	return ap, nil
 }

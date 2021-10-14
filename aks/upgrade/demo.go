@@ -80,7 +80,47 @@ func createEngineDemoCommand() *cobra.Command {
 				rules.RulesSet{
 					upgradePDBRuleProvider,
 					rules.NewRule(
-						"upgrade/armtest",
+						"upgrade/armtest-managed-cluster",
+						func(
+							ctx context.Context,
+							clusterCtx rules.ClusterContext,
+						) ([]*rules.CheckResult, error) {
+							// load the cluster from cluster context
+							cluster, err := clusterCtx.GetManagedClusterInformation(ctx)
+							if err != nil {
+								return nil, err
+							}
+
+							// load the ARM representation of the cluster
+							// the model details: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2021-08-01/containerservice#ManagedCluster
+							latestModel, err := cluster.GetLatestModel(ctx)
+							if err != nil {
+								return nil, err
+							}
+
+							// check provisioning state
+							category := rules.Healthy
+							provisionState := to.String(latestModel.ProvisioningState)
+							if provisionState != "Succeeded" {
+								category = rules.Warning
+							}
+
+							return []*rules.CheckResult{
+								{
+									RuleID:   "upgrade/armtest-managed-cluster",
+									Category: category,
+									Description: fmt.Sprintf(
+										"Got details from cluster: %s - state: %s (%s)",
+										cluster.GetResourceName(),
+										provisionState,
+										cluster.GetNodeResourceGroup(),
+									),
+								},
+							}, nil
+						},
+					),
+					rules.NewRule(
+						"upgrade/armtest-agent-pool",
 						func(
 							ctx context.Context,
 							clusterCtx rules.ClusterContext,
@@ -90,7 +130,19 @@ func createEngineDemoCommand() *cobra.Command {
 								return nil, err
 							}
 
-							latestModel, err := cluster.GetLatestModel(ctx)
+							clusterModel, err := cluster.GetLatestModel(ctx)
+							if err != nil {
+								return nil, err
+							}
+
+							ap, err := cluster.GetAgentPoolInformation(ctx, to.String((*clusterModel.AgentPoolProfiles)[0].Name))
+							if err != nil {
+								return nil, err
+							}
+
+							// load the ARM representation of the cluster
+							// the model details: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2021-08-01/containerservice#AgentPool
+							latestModel, err := ap.GetLatestModel(ctx)
 							if err != nil {
 								return nil, err
 							}
@@ -103,13 +155,13 @@ func createEngineDemoCommand() *cobra.Command {
 
 							return []*rules.CheckResult{
 								{
-									RuleID:   "upgrade/armtest",
+									RuleID:   "upgrade/armtest-agent-pool",
 									Category: category,
 									Description: fmt.Sprintf(
-										"Got details from cluster: %s - state: %s (%s)",
-										cluster.GetResourceName(),
+										"Got details from agent pool: %s - state: %s (%s)",
+										ap.GetResourceName(),
 										provisionState,
-										cluster.GetNodeResourceGroup(),
+										ap.GetManagedClusterName(),
 									),
 								},
 							}, nil
