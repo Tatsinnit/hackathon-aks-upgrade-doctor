@@ -79,6 +79,7 @@ func createEngineDemoCommand() *cobra.Command {
 				clusterCtx,
 				rules.RulesSet{
 					upgradePDBRuleProvider,
+					subnetCapacityRuleProvider,
 					rules.NewRule(
 						"upgrade/armtest-managed-cluster",
 						func(
