@@ -45,7 +45,7 @@ func createEngineDemoCommand() *cobra.Command {
 			createClusterCtx := rules.CreateClusterContextOptions{
 				ClusterKubeConfigPath: flagClusterKubeConfigFilePath,
 			}
-			clusterCtx, err := createClusterCtx.Create("b46812f2-e71b-4f85-8ed3-f24b7c0bded9", "hackcluster1_group", "hackcluster1")
+			clusterCtx, err := createClusterCtx.Create()
 			if err != nil {
 				return err
 			}
@@ -63,13 +63,13 @@ func createEngineDemoCommand() *cobra.Command {
 							ctx context.Context,
 							clusterCtx rules.ClusterContext,
 						) ([]*rules.CheckResult, error) {
-							details := clusterCtx.GetAKSClusterResourceDetails()
+							// details := clusterCtx.GetAKSClusterResourceDetails()
 
 							return []*rules.CheckResult{
 								{
 									RuleID:      "upgrade/armtest",
 									Category:    rules.Advisory,
-									Description: fmt.Sprintf("Got details from cluster: %s", details),
+									Description: fmt.Sprintf("Got details from cluster: %s", ""),
 								},
 							}, nil
 						},
