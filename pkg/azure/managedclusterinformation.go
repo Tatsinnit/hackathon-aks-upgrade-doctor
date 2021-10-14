@@ -2,8 +2,12 @@ package azure
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2021-08-01/containerservice"
+	"github.com/Azure/go-autorest/autorest"
 )
 
 // ManagedClusterInformation provides information about a managed cluster.
@@ -30,7 +34,7 @@ type ManagedClusterInformation interface {
 	GetNodeResourceGroup() string
 
 	// GetLatestModel returns the latest properties of the managed cluster.
-	GetModel(ctx context.Context) (containerservice.ManagedCluster, error)
+	GetLatestModel(ctx context.Context) (containerservice.ManagedCluster, error)
 
 	// GetKubeConfig retrieves the cluster kubeconfig.
 	GetKubeConfig(ctx context.Context) (string, error)
@@ -63,4 +67,35 @@ type ManagedClusterAgentPoolInformation interface {
 	GetLatestModel(ctx context.Context) (containerservice.ManagedClusterAgentPoolProfile, error)
 
 	// TODO: GetVMSSName()
+}
+
+// NilManagedClsuterInformation creates a nil ManagedClusterInformation instance.
+func NilManagedClsuterInformation() ManagedClusterInformation {
+	return &nilManagedClusterInformation{}
+}
+
+// LoadManagedClusterInformationFromResourceID loads a ManagedClusterInformation instance from cluster's resource ID.
+func LoadManagedClusterInformationFromResourceID(
+	authorizer autorest.Authorizer,
+	resourceID string,
+) (ManagedClusterInformation, error) {
+	armResourceID, err := ParseARMResourceID(resourceID)
+	if err != nil {
+		return &nilManagedClusterInformation{}, err
+	}
+
+	rv := &managedClusterInfomration{
+		azureAuthorizer: authorizer,
+		resourceID:      armResourceID,
+		mutex:           &sync.RWMutex{},
+	}
+
+	// load the cluster for first time
+	loadCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	if _, err := rv.GetLatestModel(loadCtx); err != nil {
+		return &nilManagedClusterInformation{}, fmt.Errorf("unable to get cluster form %s: %w", resourceID, err)
+	}
+
+	return rv, nil
 }
