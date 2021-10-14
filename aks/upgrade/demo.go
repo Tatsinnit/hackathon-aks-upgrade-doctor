@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Tatsinnit/hackathon-aks-upgrade-doctor/pkg/report"
@@ -44,7 +45,7 @@ func createEngineDemoCommand() *cobra.Command {
 			createClusterCtx := rules.CreateClusterContextOptions{
 				ClusterKubeConfigPath: flagClusterKubeConfigFilePath,
 			}
-			clusterCtx, err := createClusterCtx.Create()
+			clusterCtx, err := createClusterCtx.Create("b46812f2-e71b-4f85-8ed3-f24b7c0bded9", "hackcluster1_group", "hackcluster1")
 			if err != nil {
 				return err
 			}
@@ -56,6 +57,23 @@ func createEngineDemoCommand() *cobra.Command {
 				clusterCtx,
 				rules.RulesSet{
 					upgradePDBRuleProvider,
+					rules.NewRule(
+						"upgrade/armtest",
+						func(
+							ctx context.Context,
+							clusterCtx rules.ClusterContext,
+						) ([]*rules.CheckResult, error) {
+							details := clusterCtx.GetAKSClusterResourceDetails()
+
+							return []*rules.CheckResult{
+								{
+									RuleID:      "upgrade/armtest",
+									Category:    rules.Advisory,
+									Description: fmt.Sprintf("Got details from cluster: %s", details),
+								},
+							}, nil
+						},
+					),
 					demoRule{
 						ruleID:      "demo/upgrade/subnet",
 						category:    rules.Warning,

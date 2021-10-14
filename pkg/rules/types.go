@@ -37,7 +37,7 @@ type ClusterContext interface {
 	GetClusterKubeClient() (kubernetes.Interface, error)
 
 	// GetAKSClusterResourceDetails returns the AKS cluster resource details.
-	// GetAKSClusterResourceDetails()
+	GetAKSClusterResourceDetails() string
 
 	// GetAKSClusterNetworkSetup returns the AKS cluster network setup. TBD
 	// GetAKSClusterNetworkSetup()
