@@ -1,5 +1,5 @@
 # AKS-Upgrade-Doctor
-AKS Upgrade Doctor is a client side, self-help diagnostic tool designed to identify and detect possible issues that would cause upgrade operations to fail on AKS clusters. 
+AKS Upgrade Doctor is a client side, self-help diagnostic tool designed to identify and detect possible issues that cause upgrade operations to fail on AKS clusters. 
 This project was created as part of Microsoft's annual global hackathon and is currently in a <strong>beta</strong> state. 
 
 # Goals
@@ -11,7 +11,7 @@ This project was created as part of Microsoft's annual global hackathon and is c
 This hackathon project focuses primarily on upgrade related issues although there is a protenial for the tool to evolve in the future.The first problem we are tackling is detection of restrictive PDBs configured on AKS clusters that cause upgrade operations to fail. Out of scope is the identification and detection of all other cluster issues.
 
 # Implementation
-Inspired by [kube-bench](https://github.com/aquasecurity/kube-bench), this project is implemented as rule engine in Go lang and separates : ​
+Inspired by [kube-bench](https://github.com/aquasecurity/kube-bench), this project is implemented as a rule engine in Go lang and separates : ​
 
   -Definitions of the rules we need to check or detect <br />
 
