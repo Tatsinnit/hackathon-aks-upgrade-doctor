@@ -8,7 +8,7 @@ This project was created as part of Microsoft's annual global hackathon and is c
 -Allow for addition of new rule set via rules at engine <br />
 
 # Scope 
-This hackathon project focuses primarily on upgrade related issues although there is a protenial for the tool to evolve in the future.The first problem we are tackling is detection of restrictive PDBs configured on AKS cluster that would cause an upgrade operation to fail. Out of scope is detection of other issues.
+This hackathon project focuses primarily on upgrade related issues although there is a protenial for the tool to evolve in the future.The first problem we are tackling is detection of restrictive PDBs configured on AKS clusters that cause upgrade operations to fail. Out of scope is the identification and detection of all other cluster issues.
 
 # Implementation
 Inspired by [kube-bench](https://github.com/aquasecurity/kube-bench), this project is implemented as rule engine in Go lang and separates : ​
