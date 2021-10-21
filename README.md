@@ -5,7 +5,7 @@ This project was created as part of Microsoft's annual global hackathon and is c
 # Goals
 -Warn customers of incorrect Kubernetes cluster configurations before they try to perform an upgrade <br />
 -Reduce number of clusters that get stuck in a failure state, resulting in a negative impact to the end customer <br />
--Allow for addition of new rule set via rules at engine <br />
+-Allow for addition of new rule set via rules set engine <br />
 
 # Scope 
 This hackathon project focuses primarily on upgrade related issues although there is a protenial for the tool to evolve in the future.The first problem we are tackling is detection of restrictive PDBs configured on AKS clusters that cause upgrade operations to fail. Out of scope is the identification and detection of all other cluster issues.
