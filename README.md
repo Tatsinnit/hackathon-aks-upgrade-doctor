@@ -13,7 +13,7 @@ This hackathon project focuses primarily on upgrade related issues although ther
 # Implementation
 Inspired by [kube-bench](https://github.com/aquasecurity/kube-bench), this project is implemented as a rule engine in Go lang and separates : ​
 
-  -Definitions of the rules we need to check or detect <br />
+  -Definitions of the rules to check or detect <br />
 
   -Giving visual feedback of progress ​<br />
 
